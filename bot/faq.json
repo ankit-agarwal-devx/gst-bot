@@ -1,0 +1,23 @@
+[
+  {"id": "greeting", "question": "Hello",
+   "aliases": ["hi", "hey", "good morning", "namaste"],
+   "answer": "Hello! I'm the GST assistant. Ask me a GST question, or use the invoice calculator."},
+  {"id": "capabilities", "question": "What can you do?",
+   "aliases": ["help", "what can you help with", "how does this work"],
+   "answer": "I answer questions about Indian GST and can work out the GST on an invoice. Common questions are answered instantly; anything else goes to the tax-model service."},
+  {"id": "what-is-gst", "question": "What is GST?",
+   "aliases": ["whats gst", "what's gst", "define gst", "gst meaning"],
+   "answer": "GST (Goods and Services Tax) is a destination-based indirect tax on the supply of goods and services in India. It replaced most central and state indirect taxes on 1 July 2017."},
+  {"id": "cgst-sgst-igst", "question": "What is the difference between CGST, SGST and IGST?",
+   "aliases": ["cgst vs sgst vs igst", "difference between cgst sgst igst", "cgst sgst igst"],
+   "answer": "Within one state, GST is split equally into CGST (Centre) and SGST or UTGST (state or union territory). Between states, the full rate is charged as IGST (Centre)."},
+  {"id": "what-is-gstin", "question": "What is a GSTIN?",
+   "aliases": ["what is gstin", "gstin meaning", "gst number format"],
+   "answer": "A GSTIN is the 15-character GST identification number: a 2-digit state code, the 10-character PAN, an entity number, the letter Z and a check character."},
+  {"id": "how-to-calculate", "question": "How do I calculate GST on an invoice?",
+   "aliases": ["calculate gst", "gst calculator", "how to calculate gst"],
+   "answer": "Send the invoice to POST /api/gst/calculate with the supplier GSTIN, the invoice date and the lines. I'll split the tax into CGST, SGST, UTGST or IGST and round the total."},
+  {"id": "e-way-bill", "question": "What is an e-way bill?",
+   "aliases": ["eway bill", "what is eway bill", "e way bill meaning"],
+   "answer": "An e-way bill is an electronic document needed to move goods worth more than Rs 50,000 in one consignment. It is generated on the e-way bill portal before the movement starts."}
+]

@@ -1,0 +1,13 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: gstbot
+      POSTGRES_PASSWORD: gstbot
+      POSTGRES_DB: gstbot
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "gstbot"]
+      interval: 2s
+      retries: 15

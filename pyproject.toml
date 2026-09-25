@@ -1,0 +1,23 @@
+[project]
+name = "gst-bot"
+version = "0.1.0"
+description = "GST chatbot (hiring puzzle)"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "django>=5.2,<5.3",
+    "httpx>=0.27",
+    "psycopg[binary]>=3.2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "pytest-django>=4.9",
+    "pytest-timeout>=2.3",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+DJANGO_SETTINGS_MODULE = "gstbot.settings"
+timeout = 30
