@@ -6,10 +6,11 @@ like is at the bottom.
 
 ## Task 1
 
-- **Plan (sub-tasks, in order):**
-- **Root cause(s):**
-- **What broke when you fixed something, and why:**
-- **Time spent:**
+- **Plan (sub-tasks, in order):** 1. Reproduce Task 1's first failure. 2. Normalize Unicode, case, whitespace and punctuation; load the FAQ's plural `aliases` key. 3. Require exact normalized matches and run the Task 1 test file.
+- **Root cause(s):** FAQ matching only lowercased and trimmed text, accepted prefixes, and loaded `alias` even though `faq.json` uses `aliases`.
+- **What broke when you fixed something, and why:** Nothing observed; all 25 Task 1 tests pass.
+- **Time spent:** 40 mins.
+- **Test Command:**  `uv run pytest tests/bot/test_task1_faq.py -q`
 
 ## Task 2
 
@@ -33,8 +34,6 @@ like is at the bottom.
 - **Time spent:**
 
 ## If I had more time
-
--
 
 ---
 

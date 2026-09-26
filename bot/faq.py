@@ -1,5 +1,6 @@
 import json
 import os
+import unicodedata
 
 _FAQ = None
 
@@ -12,14 +13,20 @@ def _load():
             data = json.load(f)
         for item in data:
             keys = [clean(item["question"])]
-            for a in item.get("alias", []):
+            for a in item.get("aliases", item.get("alias", [])):
                 keys.append(clean(a))
             _FAQ.append((keys, item))
     return _FAQ
 
 
 def clean(q):
-    return q.lower().strip().rstrip("?")
+    q = unicodedata.normalize("NFKC", q).casefold()
+    normalized = []
+    for char in q:
+        if char in "'\u2018\u2019":
+            continue
+        normalized.append(" " if unicodedata.category(char).startswith("P") else char)
+    return " ".join("".join(normalized).split())
 
 
 def match(q):
@@ -27,6 +34,6 @@ def match(q):
     q = clean(q)
     for keys, item in _load():
         for k in keys:
-            if q.startswith(k):
+            if q == k:
                 return item
     return None
