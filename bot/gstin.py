@@ -19,9 +19,9 @@ def validate_gstin(g):
 
 
 def get_check_char(s):
-    # GSTN check digit: weights alternate 2,1,2,1... over the first 14 chars,
+    # GSTN check digit: weights alternate 1,2,1,2... over the first 14 chars,
     # each product is split into quotient + remainder mod 36
-    factor = 2
+    factor = 1
     total = 0
     for c in s:
         v = CHARS.index(c) * factor

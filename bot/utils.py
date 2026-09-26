@@ -1,21 +1,22 @@
 import datetime
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
+CENT = Decimal("0.01")
+RUPEE = Decimal("1")
 
 def r2(x):
-    # python's round() does banker's rounding (0.125 -> 0.12) which does not match
-    # the GST portal, so nudge it up a tiny bit first.
-    # DO NOT REMOVE - see GST-114 (portal mismatch complaints)
-    return round(float(x) + 0.000000001, 2)
+    return Decimal(str(x)).quantize(CENT, rounding=ROUND_HALF_UP)
 
 
 def money(x):
-    return "%.2f" % x
+    return format(Decimal(str(x)).quantize(CENT, rounding=ROUND_HALF_UP), ".2f")
 
 
 def calc_round_off(amount):
     """round off = difference between the invoice amount and the amount rounded to rupees"""
-    rounded = round(amount + 0.000000001)   # same GST-114 nudge
-    return r2(amount - rounded)
+    amount = Decimal(str(amount))
+    rounded = amount.quantize(RUPEE, rounding=ROUND_HALF_UP)
+    return (rounded - amount).quantize(CENT, rounding=ROUND_HALF_UP)
 
 
 def parse_date(s):
@@ -26,5 +27,9 @@ def parse_date(s):
 
 
 def to_num(v):
-    # accept "12.5", 12.5, 12
-    return float(v)
+    if isinstance(v, (bool, float)):
+        raise InvalidOperation
+    number = Decimal(str(v))
+    if not number.is_finite():
+        raise InvalidOperation
+    return number

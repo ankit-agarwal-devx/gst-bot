@@ -14,10 +14,11 @@ like is at the bottom.
 
 ## Task 2
 
-- **Plan (sub-tasks, in order):**
-- **Root cause(s):**
-- **What broke when you fixed something, and why:**
-- **Time spent:**
+- **Plan (sub-tasks, in order):** 1. Reproduce the invalid GSTIN rejection. 2. Correct checksum weighting and calculator tax rules. 3. Use exact decimal arithmetic and run the Task 2 tests.
+- **Root cause(s):** The GSTIN checksum weights started in the wrong position; currency calculations used binary floats; place-of-supply and SEZ inputs were handled incorrectly; Delhi was classified for UTGST; the new rate date was exclusive.
+- **What broke when you fixed something, and why:** The first Decimal helper change exposed float totals in the calculator; totals were converted to Decimal as well. The final Task 2 suite passes.
+- **Time spent:**  2 hrs.
+- **Test Command:** `uv run pytest tests/bot/test_task2_gst.py -q`
 
 ## Task 3
 

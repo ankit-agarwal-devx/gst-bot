@@ -1,5 +1,5 @@
 # GST state codes -> (name, is_UT)
-# UTs pay UTGST instead of SGST
+# UTs without a legislature pay UTGST instead of SGST
 # TODO: 25 (Daman & Diu) was merged into 26 in 2020 - removed. check if anything else changed
 STATES = {
     "01": ("Jammu and Kashmir", False),
@@ -8,7 +8,7 @@ STATES = {
     "04": ("Chandigarh", True),
     "05": ("Uttarakhand", False),
     "06": ("Haryana", False),
-    "07": ("Delhi", True),
+    "07": ("Delhi", False),
     "08": ("Rajasthan", False),
     "09": ("Uttar Pradesh", False),
     "10": ("Bihar", False),

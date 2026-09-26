@@ -11,6 +11,7 @@ def _load():
         _FAQ = []
         with open(os.path.join(os.path.dirname(__file__), "faq.json")) as f:
             data = json.load(f)
+            print(data)
         for item in data:
             keys = [clean(item["question"])]
             for a in item.get("aliases", item.get("alias", [])):

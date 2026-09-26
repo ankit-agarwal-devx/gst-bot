@@ -3,37 +3,40 @@
 calculate(data) takes the raw request body and returns (result, errors).
 """
 import datetime
+from decimal import Decimal
 
 from bot.gstin import validate_gstin
 from bot.states import STATES
 from bot.utils import calc_round_off, money, parse_date, r2, to_num
 
-OLD_RATES = [0, 0.25, 3, 5, 12, 18, 28]
-NEW_RATES = [0, 0.25, 3, 5, 18, 40]      # GST 2.0 (22 Sep 2025)
+OLD_RATES = [Decimal(rate) for rate in ("0", "0.25", "3", "5", "12", "18", "28")]
+NEW_RATES = [Decimal(rate) for rate in ("0", "0.25", "3", "5", "18", "40")]  # GST 2.0 (22 Sep 2025)
 NEW_RATES_FROM = datetime.date(2025, 9, 22)
 
 
 def _rates_for(d):
-    if d > NEW_RATES_FROM:
+    if d >= NEW_RATES_FROM:
         return NEW_RATES
     return OLD_RATES
 
 
 def calculate(data):
     errors = []
-    supplier = (data.get("supplier_gstin") or "").strip().upper()
-    buyer = data.get("buyer_gstin")
-    if buyer:
-        buyer = buyer.strip().upper()
+    supplier_value = data.get("supplier_gstin")
+    supplier = supplier_value.strip().upper() if isinstance(supplier_value, str) else ""
+    buyer_value = data.get("buyer_gstin")
+    buyer = buyer_value.strip().upper() if isinstance(buyer_value, str) else ""
     pos = data.get("place_of_supply")
-    sez = data.get("is_sez", False)
+    sez = data.get("sez", data.get("is_sez", False))
 
     if not validate_gstin(supplier):
         errors.append("supplier_gstin is not a valid GSTIN")
-    if buyer and not validate_gstin(buyer):
+    if buyer_value not in (None, "") and (not buyer or not validate_gstin(buyer)):
         errors.append("buyer_gstin is not a valid GSTIN")
-    if pos is not None and pos not in STATES:
+    if pos is not None and (not isinstance(pos, str) or pos not in STATES):
         errors.append("place_of_supply is not a valid state code")
+    if not isinstance(sez, bool):
+        errors.append("sez must be a boolean")
 
     inv_date = parse_date(data.get("invoice_date") or "")
     if inv_date is None:
@@ -42,9 +45,15 @@ def calculate(data):
     raw_lines = data.get("lines") or []
     if not raw_lines:
         errors.append("at least one line is required")
+    elif not isinstance(raw_lines, list):
+        errors.append("lines must be a list")
+        raw_lines = []
 
     lines = []
     for i, l in enumerate(raw_lines):
+        if not isinstance(l, dict):
+            errors.append("lines[%d] must be an object" % i)
+            continue
         try:
             qty = to_num(l["quantity"])
         except Exception:
@@ -60,7 +69,11 @@ def calculate(data):
         except Exception:
             errors.append("lines[%d].rate is not a number" % i)
             continue
-        disc = to_num(l.get("discount", 0) or 0)
+        try:
+            disc = to_num(l.get("discount", "0"))
+        except Exception:
+            errors.append("lines[%d].discount is not a number" % i)
+            continue
         if qty <= 0:
             errors.append("lines[%d].quantity must be positive" % i)
         if price < 0:
@@ -75,10 +88,8 @@ def calculate(data):
         return None, errors
 
     supplier_state = supplier[:2]
-    if buyer:
-        pos = buyer[:2]
-    elif not pos:
-        pos = supplier_state
+    if not pos:
+        pos = buyer[:2] if buyer else supplier_state
 
     inter = False
     if sez:
@@ -88,10 +99,11 @@ def calculate(data):
     ut = STATES[pos][1]
 
     out_lines = []
-    totals = {"taxable_value": 0.0, "cgst": 0.0, "sgst": 0.0, "utgst": 0.0, "igst": 0.0}
+    totals = {"taxable_value": Decimal("0"), "cgst": Decimal("0"), "sgst": Decimal("0"),
+              "utgst": Decimal("0"), "igst": Decimal("0")}
     for desc, qty, price, rate, disc, rate_str in lines:
         taxable = r2(qty * price - disc)
-        cgst = sgst = utgst = igst = 0.0
+        cgst = sgst = utgst = igst = Decimal("0")
         if inter:
             igst = r2(taxable * rate / 100)
         else:
@@ -114,7 +126,7 @@ def calculate(data):
     tax = totals["cgst"] + totals["sgst"] + totals["utgst"] + totals["igst"]
     invoice_value = totals["taxable_value"] + tax
     round_off = calc_round_off(invoice_value)
-    grand_total = invoice_value - round_off
+    grand_total = invoice_value + round_off
 
     result = {
         "supply_type": "inter_state" if inter else "intra_state",
