@@ -41,13 +41,13 @@ curl -X POST localhost:8000/api/gst/calculate -H 'Content-Type: application/json
   "lines": [{"description": "Widget", "quantity": "2", "unit_price": "499.99", "rate": "18"}]}'
 ```
 
-| Method | Path | Body |
-|---|---|---|
-| POST | `/api/conversations` | none. Returns `{"id"}` |
-| POST | `/api/conversations/<id>/messages` | `{"client_message_id", "text"}`. Returns `{"message", "reply"}` |
-| GET | `/api/conversations/<id>/messages` | none |
-| POST | `/api/gst/calculate` | `{"supplier_gstin", "invoice_date", "lines": [...], "buyer_gstin"?, "place_of_supply"?, "sez"?}` |
-| GET | `/healthz` | none |
+| Method | Path                                 | Body                                                                                               |
+| ------ | ------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| POST   | `/api/conversations`               | none. Returns`{"id"}`                                                                            |
+| POST   | `/api/conversations/<id>/messages` | `{"client_message_id", "text"}`. Returns `{"message", "reply"}`                                |
+| GET    | `/api/conversations/<id>/messages` | none                                                                                               |
+| POST   | `/api/gst/calculate`               | `{"supplier_gstin", "invoice_date", "lines": [...], "buyer_gstin"?, "place_of_supply"?, "sez"?}` |
+| GET    | `/healthz`                         | none                                                                                               |
 
 ## Rules
 

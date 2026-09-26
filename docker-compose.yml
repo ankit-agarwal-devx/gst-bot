@@ -2,9 +2,9 @@ services:
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: gstbot
-      POSTGRES_PASSWORD: gstbot
-      POSTGRES_DB: gstbot
+      POSTGRES_USER: gstIndiabot
+      POSTGRES_PASSWORD: gstIndiabot
+      POSTGRES_DB: gstIndiabot
     ports:
       - "5432:5432"
     healthcheck:
