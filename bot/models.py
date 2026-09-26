@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Q
 
 
 class Conversation(models.Model):
@@ -18,6 +19,13 @@ class Message(models.Model):
 
     class Meta:
         ordering = ["created_at", "id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["conversation", "client_message_id"],
+                condition=Q(role="user", client_message_id__isnull=False),
+                name="unique_user_message_client_id",
+            ),
+        ]
 
     def as_dict(self):
         return {

@@ -49,6 +49,8 @@ def messages(request, conversation_id):
         return JsonResponse({"errors": errors}, status=400)
 
     user_msg, reply, created = chat.post_message(conversation, cmid, text.strip())
+    if reply is None:
+        return JsonResponse({"errors": ["message is already being processed"]}, status=409)
     return JsonResponse({"message": user_msg.as_dict(), "reply": reply.as_dict()}, status=201 if created else 200)
 
 

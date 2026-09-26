@@ -22,10 +22,11 @@ like is at the bottom.
 
 ## Task 3
 
-- **Plan (sub-tasks, in order):**
-- **Root cause(s):**
-- **What broke when you fixed something, and why:**
-- **Time spent:**
+- **Plan (sub-tasks, in order):** 1. Reproduce the missing-timeout failure. 2. Add bounded retries, backoff, and idempotency for upstream calls. 3. Make duplicate-message handling and daily usage concurrency-safe. 4. Run Tasks 1-3 together.
+- **Root cause(s):** Upstream calls had no timeout or deadline, retried every status without honoring `Retry-After`, and lacked an idempotency key. Message IDs were not unique per conversation, and daily usage used a racy read-modify-write.
+- **What broke when you fixed something, and why:** The race test continued to create eight messages until a database uniqueness constraint was added; an in-progress duplicate now receives 409. All 17 Task 3 tests pass.
+- **Time spent:** 2 hrs.
+- **Test Command:** `uv run pytest tests/bot/test_task3_upstream.py -q`
 
 ## Task 4
 
