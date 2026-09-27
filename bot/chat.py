@@ -8,12 +8,14 @@ from django.conf import settings
 from django.db import IntegrityError, transaction
 
 from bot import faq, usage
+from bot.breaker import CircuitBreaker
 from bot.models import Conversation, Message  # noqa: F401  (Conversation used by views)
 
 log = logging.getLogger("bot")
 
 SYSTEM = "You are a GST assistant for Indian businesses. Answer briefly and precisely."
 SORRY = "Sorry, something went wrong. Please try again later."
+breaker = CircuitBreaker(settings.BREAKER["FAILURE_THRESHOLD"], settings.BREAKER["OPEN_SECONDS"])
 
 _http = None
 
@@ -28,8 +30,23 @@ def _client():
 
 
 def reset_state():
-    global _http
+    global _http, breaker
+    if _http is not None:
+        _http.close()
     _http = None
+    breaker = CircuitBreaker(settings.BREAKER["FAILURE_THRESHOLD"], settings.BREAKER["OPEN_SECONDS"])
+
+
+class DailyBudgetExceeded(Exception):
+    pass
+
+
+def busy_reply(question):
+    suggestions = faq.related_questions(question)
+    text = "Tax-model is busy right now."
+    if suggestions:
+        text += " You can ask:\n" + "\n".join("- " + item for item in suggestions)
+    return text + "\nPlease try again in a minute."
 
 
 def ask_taxmodel(messages, idempotency_key=None):
@@ -45,7 +62,7 @@ def ask_taxmodel(messages, idempotency_key=None):
         if remaining <= 0:
             break
         if not usage.try_consume_upstream_call():
-            raise Exception("daily budget used up")
+            raise DailyBudgetExceeded("daily budget used up")
 
         timeout = httpx.Timeout(
             min(cfg["READ_TIMEOUT"], remaining),
@@ -89,7 +106,9 @@ def ask_taxmodel(messages, idempotency_key=None):
 
 def history(conversation, user_msg):
     msgs = [{"role": "system", "content": SYSTEM}]
-    previous = conversation.messages.exclude(pk=user_msg.pk).order_by("-created_at", "-pk")[
+    previous = conversation.messages.filter(degraded=False).exclude(pk=user_msg.pk).order_by(
+        "-created_at", "-pk"
+    )[
         : settings.TAXMODEL["HISTORY_TURNS"]
     ]
     for m in reversed(previous):
@@ -121,14 +140,21 @@ def post_message(conversation, client_message_id, text):
     item = faq.match(text)
     if item:
         reply_text, source, degraded = item["answer"], "faq", False
+    elif not breaker.allow():
+        reply_text, source, degraded = busy_reply(text), "fallback", True
     else:
         try:
             reply_text, source, degraded = ask_taxmodel(
                 history(conversation, user_msg), idempotency_key="msg-%d" % user_msg.pk
             ), "upstream", False
+        except DailyBudgetExceeded:
+            reply_text, source, degraded = busy_reply(text), "fallback", True
         except Exception:
+            breaker.record_failure()
             log.exception("could not get an answer from tax-model")
-            reply_text, source, degraded = SORRY, "fallback", True
+            reply_text, source, degraded = busy_reply(text), "fallback", True
+        else:
+            breaker.record_success()
 
     reply = Message.objects.create(conversation=conversation, role="assistant", text=reply_text,
                                    reply_to=user_msg, source=source, degraded=degraded)

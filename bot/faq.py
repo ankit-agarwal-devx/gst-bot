@@ -3,6 +3,8 @@ import os
 import unicodedata
 
 _FAQ = None
+_STOP_WORDS = {"a", "an", "and", "are", "can", "do", "for", "how", "i", "is", "it", "me", "my",
+               "of", "on", "or", "the", "to", "what", "with", "you"}
 
 
 def _load():
@@ -38,3 +40,28 @@ def match(q):
             if q == k:
                 return item
     return None
+
+
+def related_questions(q, limit=3):
+    query_tokens = set(clean(q).split()) - _STOP_WORDS
+    if not query_tokens:
+        return []
+
+    entries = _load()
+    item_tokens = [
+        set().union(*(set(key.split()) - _STOP_WORDS for key in keys))
+        for keys, _ in entries
+    ]
+    frequencies = {}
+    for tokens in item_tokens:
+        for token in tokens:
+            frequencies[token] = frequencies.get(token, 0) + 1
+
+    ranked = []
+    for (_, item), tokens in zip(entries, item_tokens):
+        shared = query_tokens & tokens
+        score = sum(2 if frequencies[token] == 1 else 1 for token in shared)
+        if score >= 2:
+            ranked.append((score, item["question"]))
+    ranked.sort(key=lambda result: (-result[0], result[1]))
+    return [question for _, question in ranked[:limit]]

@@ -30,10 +30,11 @@ like is at the bottom.
 
 ## Task 4
 
-- **Plan (sub-tasks, in order), written before you start:**
-- **Design decisions and trade-offs:**
-- **What broke, and why:**
-- **Time spent:**
+- **Plan (sub-tasks, in order), written before you start:** 1. Add a thread-safe closed/open/half-open breaker using configured threshold and open duration. 2. Integrate it with upstream calls, leaving budget exhaustion out of breaker failures. 3. Return an immediate busy reply with relevant FAQ questions and omit degraded replies from model history. 4. Run Task 4 and regression tests.
+- **Design decisions and trade-offs:** A lock protects breaker transitions so only one caller gets the half-open trial. The breaker is process-local; FAQ suggestions use weighted word overlap so unrelated questions are not suggested. Budget exhaustion does not count as an upstream failure.
+- **What broke, and why:** The initial focused test confirmed the missing breaker module; after adding it, integration covered the module-level chat breaker. All visible tests now pass.
+- **Time spent:**  3.5 hrs.
+- **Test Command:** `uv run pytest tests/bot/test_task4_resilience.py -q`
 
 ## If I had more time
 
